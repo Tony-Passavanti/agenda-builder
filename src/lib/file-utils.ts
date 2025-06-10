@@ -1,4 +1,4 @@
-export const uploadFile = async (file: File): Promise<{ success: boolean; filePath?: string; error?: string }> => {
+export const uploadFile = async (file: File): Promise<{ success: boolean; fileName?: string; filePath?: string; error?: string }> => {
   try {
     const formData = new FormData();
     formData.append('file', file);

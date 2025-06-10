@@ -22,7 +22,26 @@ export default function Home() {
       console.log('Processing file:', uploadedFile.path);
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1500));
-      // Handle successful processing
+      
+      // After successful processing, delete the file
+      const response = await fetch('/api/delete-file', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filePath: uploadedFile.path })
+      });
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        console.error('Error deleting file:', result.error);
+        // Continue even if file deletion fails, as the main processing was successful
+      }
+      
+      // Reset the uploaded file state
+      setUploadedFile(null);
+      
     } catch (error) {
       console.error('Error processing file:', error);
     } finally {
