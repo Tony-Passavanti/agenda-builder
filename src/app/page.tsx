@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import FileUploader from '@/components/FileUploader';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
   const [uploadedFile, setUploadedFile] = useState<{ path: string; name: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleUploadSuccess = (filePath: string) => {
     // Extract filename from path
@@ -22,7 +24,27 @@ export default function Home() {
       console.log('Processing file:', uploadedFile.path);
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1500));
-      // Handle successful processing
+      
+      // After successful processing, delete the file
+      const response = await fetch('/api/delete-file', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filePath: uploadedFile.path })
+      });
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        console.error('Error deleting file:', result.error);
+        // Continue even if file deletion fails, as the main processing was successful
+      }
+      
+      // Show success modal
+      setShowSuccessModal(true);
+      // Reset the uploaded file state but keep it for potential download
+      
     } catch (error) {
       console.error('Error processing file:', error);
     } finally {
@@ -171,6 +193,53 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
+              aria-label="Close"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+            
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <svg
+                  className="h-6 w-6 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Processing Complete!</h3>
+              <p className="text-gray-500 mb-6">Your agenda has been successfully generated.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  alert('The agendas would have downloaded');
+                  setShowSuccessModal(false);
+                  // Reset the uploaded file state to show the uploader again
+                  setUploadedFile(null);
+                }}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Download Agendas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 py-4 text-center text-gray-300 text-sm">

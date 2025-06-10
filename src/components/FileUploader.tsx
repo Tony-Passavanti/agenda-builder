@@ -7,7 +7,7 @@ interface FileUploadResponse {
   success: boolean;
   filePath?: string;
   fileName?: string;
-  error?: string;
+    error?: string;
 }
 
 interface FileUploaderProps {
