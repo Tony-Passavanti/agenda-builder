@@ -53,9 +53,26 @@ export default function FileUploader({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    const validExtensions = ['.xlsx', '.xls'];
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    
+    if (!fileExtension || !validExtensions.includes(`.${fileExtension}`)) {
+      setError('Only Excel files (.xlsx, .xls) are supported');
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
     // Validate file size
     if (file.size > maxSizeMB * 1024 * 1024) {
       setError(`File size must be less than ${maxSizeMB}MB`);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -75,8 +92,8 @@ export default function FileUploader({
       setError('An error occurred during upload');
     } finally {
       setIsUploading(false);
-      // Reset file input
-      if (fileInputRef.current) {
+      // Reset file input if there was an error
+      if (fileInputRef.current && error) {
         fileInputRef.current.value = '';
       }
     }
