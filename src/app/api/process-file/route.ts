@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { join } from 'path';
-import { readFile, unlink, mkdir, writeFile } from 'fs/promises';
+import { mkdir, writeFile } from 'fs/promises';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 

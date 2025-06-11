@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, ChangeEvent, DragEvent, useCallback } from 'react';
-import { uploadFile } from '@/lib/file-utils';
 import * as XLSX from 'xlsx';
 
 interface FileUploaderProps {
