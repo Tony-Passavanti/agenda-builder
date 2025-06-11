@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import FileUploader from '@/components/FileUploader';
-import { XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
   const [uploadedFile, setUploadedFile] = useState<{ path: string; name: string } | null>(null);

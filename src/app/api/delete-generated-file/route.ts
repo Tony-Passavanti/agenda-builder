@@ -11,7 +11,7 @@ export async function DELETE() {
       await fs.access(filePath);
     } catch (error) {
       // File doesn't exist, nothing to delete
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: false, error: `File ${filePath} does not exist: ${error}` }, { status: 404 });
     }
     
     // Delete the file
