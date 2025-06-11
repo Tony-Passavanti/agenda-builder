@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     // Add AVANT logo at the bottom center
     try {
       // Get the logo from the public URL
-      const logoResponse = await fetch('http://localhost:3000/media/AVANT_LOGO_OUTLINE.png');
+      const logoResponse = await fetch('https://images.squarespace-cdn.com/content/v1/65cd12b87b6f902ede6eae13/680f1d02-82ff-41f3-9fbf-8cdca5cbd9e3/2022_01_04+-+AVANT+LOGO+-+OUTLINE.png');
       const logoBuffer = await logoResponse.arrayBuffer();
       const logoBase64 = Buffer.from(logoBuffer).toString('base64');
       const logoDataUrl = `data:image/png;base64,${logoBase64}`;
