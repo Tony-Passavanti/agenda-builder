@@ -9,22 +9,19 @@ type ExcelRow = (string | number | boolean | null)[];
 
 export async function POST(request: Request) {
   try {
-    const { filePath } = await request.json();
+    // Read the raw file data from the request
+    const arrayBuffer = await request.arrayBuffer();
     
-    if (!filePath) {
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
       return NextResponse.json(
-        { success: false, error: 'No file path provided' },
+        { success: false, error: 'No file data provided' },
         { status: 400 }
       );
     }
-
-    // Remove the leading slash to make it a relative path
-    const relativePath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
-    const fullPath = join(process.cwd(), 'public', relativePath);
     
-    // Read the Excel file
-    const fileBuffer = await readFile(fullPath);
-    const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+    // Convert to Uint8Array and read as workbook
+    const workbookData = new Uint8Array(arrayBuffer);
+    const workbook = XLSX.read(workbookData, { type: 'array' });
     
     // Get the first worksheet
     const firstSheetName = workbook.SheetNames[0];
@@ -114,13 +111,6 @@ export async function POST(request: Request) {
     
     const pdfBytes = doc.output('arraybuffer');
     await writeFile(pdfPath, Buffer.from(pdfBytes));
-    
-    // Delete the original uploaded file
-    try {
-      await unlink(fullPath);
-    } catch (error) {
-      console.error('Error deleting original file:', error);
-    }
     
     return NextResponse.json({ 
       success: true, 

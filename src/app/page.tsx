@@ -2,17 +2,20 @@
 
 import { useState } from 'react';
 import FileUploader from '@/components/FileUploader';
+import * as XLSX from 'xlsx';
 
 export default function Home() {
-  const [uploadedFile, setUploadedFile] = useState<{ path: string; name: string } | null>(null);
+  //const [isFileUploaded, setIsFileUploaded] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [pdfPath, setPdfPath] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<{
+    workbook: XLSX.WorkBook;
+    fileData: ArrayBuffer;
+  } | null>(null);
 
-  const handleUploadSuccess = (filePath: string) => {
-    // Extract filename from path
-    const fileName = filePath.split('/').pop() || 'Uploaded file';
-    setUploadedFile({ path: filePath, name: fileName });
+  const handleUploadSuccess = (workbook: XLSX.WorkBook, fileData: ArrayBuffer) => {
+    setUploadedFile({ workbook, fileData });
   };
 
   const handleProcessFile = async () => {
@@ -20,13 +23,13 @@ export default function Home() {
     
     setIsProcessing(true);
     try {
+      // Convert ArrayBuffer to Uint8Array for sending
+      const fileData = new Uint8Array(uploadedFile.fileData);
+      
       // Call the process-file API to generate PDF
       const response = await fetch('/api/process-file', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ filePath: uploadedFile.path })
+        body: fileData
       });
       
       const result = await response.json();
@@ -155,7 +158,7 @@ export default function Home() {
                     </svg>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
-                        {uploadedFile.name}
+                        {uploadedFile.workbook.SheetNames[0]}
                       </p>
                       <p className="text-sm text-gray-500">
                         Ready for processing

@@ -2,9 +2,10 @@
 
 import { useState, useRef, ChangeEvent, DragEvent, useCallback } from 'react';
 import { uploadFile } from '@/lib/file-utils';
+import * as XLSX from 'xlsx';
 
 interface FileUploaderProps {
-  onUploadSuccess: (filePath: string) => void;
+  onUploadSuccess: (workbook: XLSX.WorkBook, fileData: ArrayBuffer) => void;
   accept?: string;
   maxSizeMB?: number;
 }
@@ -34,44 +35,35 @@ export default function FileUploader({
   const handleFileChange = useCallback(async (e: ChangeEvent<HTMLInputElement> | { target: { files: FileList | null } }) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
+  
     // Validate file type
     const validExtensions = ['.xlsx', '.xls'];
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     
     if (!fileExtension || !validExtensions.includes(`.${fileExtension}`)) {
       setError('Only Excel files (.xlsx, .xls) are supported');
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
       return;
     }
-
-    // Validate file size
-    if (file.size > maxSizeMB * 1024 * 1024) {
-      setError(`File size must be less than ${maxSizeMB}MB`);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
+  
     setIsUploading(true);
     setError(null);
-
+  
     try {
-      const result = await uploadFile(file);
+      // Read the file as ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
       
-      if (result.success && result.filePath) {
-        onUploadSuccess(result.filePath);
-      } else {
-        setError(result.error || 'Failed to upload file');
-      }
+      // Convert to Uint8Array and read as workbook
+      const data = new Uint8Array(arrayBuffer);
+      const workbook = XLSX.read(data, { type: 'array' });
+      
+      // Pass both the workbook and the raw file data to the parent component
+      onUploadSuccess(workbook, arrayBuffer);
     } catch (err) {
       console.error('Upload error:', err);
-      setError('An error occurred during upload');
+      setError('Failed to process the Excel file');
     } finally {
       setIsUploading(false);
       // Reset file input if there was an error
@@ -79,7 +71,7 @@ export default function FileUploader({
         fileInputRef.current.value = '';
       }
     }
-  }, [maxSizeMB, onUploadSuccess]);
+  }, [onUploadSuccess]);
 
   const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
