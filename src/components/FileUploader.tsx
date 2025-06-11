@@ -31,18 +31,7 @@ export default function FileUploader({
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleFileChange({ target: { files } });
-    }
-  }, []);
-
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement> | { target: { files: FileList | null } }) => {
+  const handleFileChange = useCallback(async (e: ChangeEvent<HTMLInputElement> | { target: { files: FileList | null } }) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -90,7 +79,23 @@ export default function FileUploader({
         fileInputRef.current.value = '';
       }
     }
-  };
+  }, [maxSizeMB, onUploadSuccess]);
+
+  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileChange({ target: { files } });
+    }
+  }, [handleFileChange]);
+  
+  // Memoize the file input change handler
+  const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    handleFileChange(e);
+  }, [handleFileChange]);
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -146,7 +151,7 @@ export default function FileUploader({
             type="file"
             className="hidden"
             accept={accept}
-            onChange={handleFileChange}
+            onChange={handleInputChange}
             disabled={isUploading}
           />
         </label>
