@@ -1,4 +1,4 @@
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile } from 'fs/promises';
 import { NextResponse } from 'next/server';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
