@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Avant Agenda Builder",
+  title: "Avant Agenda Builder v1.0.0",
   description: "Get beautiful agendas in seconds with the Avant Agenda Builder",
 };
 
