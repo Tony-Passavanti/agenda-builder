@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server';
 import { join } from 'path';
-import { readFile, unlink } from 'fs/promises';
+import { readFile, unlink, mkdir, writeFile } from 'fs/promises';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
+// Type for Excel row data
+type ExcelRow = (string | number | boolean | null)[];
 
 export async function POST(request: Request) {
   try {
@@ -34,11 +30,11 @@ export async function POST(request: Request) {
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
     
-    // Convert to JSON
-    const data = XLSX.utils.sheet_to_json<Record<string, any>[]>(worksheet, { header: 1 });
+    // Convert to array of rows
+    const data = XLSX.utils.sheet_to_json<ExcelRow>(worksheet, { header: 1 }) as ExcelRow[];
     
     // Get event name from cell A1 (0,0)
-    const eventName = (data[0] as any[])?.[0] || 'Event Agenda';
+    const eventName = (data[0]?.[0]?.toString() || 'Event Agenda').trim();
     
     // Create a simple PDF with just the event name and date
     const doc = new jsPDF({
@@ -47,8 +43,6 @@ export async function POST(request: Request) {
       format: 'a4'
     });
     
-    // Set margins
-    const margin = 20;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     
@@ -116,10 +110,10 @@ export async function POST(request: Request) {
     // Save the PDF
     const pdfPath = join(process.cwd(), 'public', 'generated', 'agenda.pdf');
     const uploadDir = join(process.cwd(), 'public', 'generated');
-    await require('fs').promises.mkdir(uploadDir, { recursive: true });
+    await mkdir(uploadDir, { recursive: true });
     
     const pdfBytes = doc.output('arraybuffer');
-    await require('fs').promises.writeFile(pdfPath, Buffer.from(pdfBytes));
+    await writeFile(pdfPath, Buffer.from(pdfBytes));
     
     // Delete the original uploaded file
     try {

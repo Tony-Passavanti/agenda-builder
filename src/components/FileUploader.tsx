@@ -3,13 +3,6 @@
 import { useState, useRef, ChangeEvent, DragEvent, useCallback } from 'react';
 import { uploadFile } from '@/lib/file-utils';
 
-interface FileUploadResponse {
-  success: boolean;
-  filePath?: string;
-  fileName?: string;
-    error?: string;
-}
-
 interface FileUploaderProps {
   onUploadSuccess: (filePath: string) => void;
   accept?: string;

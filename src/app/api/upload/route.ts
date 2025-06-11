@@ -1,4 +1,4 @@
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import { NextResponse } from 'next/server';
 import { join } from 'path';
 
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const filePath = join(uploadDir, file.name);
     
     // Ensure the uploads directory exists
-    await require('fs').promises.mkdir(uploadDir, { recursive: true });
+    await mkdir(uploadDir, { recursive: true });
     
     // Save the file
     await writeFile(filePath, buffer);
