@@ -8,6 +8,7 @@ export default function Home() {
   const [uploadedFile, setUploadedFile] = useState<{ path: string; name: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [pdfPath, setPdfPath] = useState<string | null>(null);
 
   const handleUploadSuccess = (filePath: string) => {
     // Extract filename from path
@@ -20,14 +21,9 @@ export default function Home() {
     
     setIsProcessing(true);
     try {
-      // Here you would typically call an API to process the file
-      console.log('Processing file:', uploadedFile.path);
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // After successful processing, delete the file
-      const response = await fetch('/api/delete-file', {
-        method: 'DELETE',
+      // Call the process-file API to generate PDF
+      const response = await fetch('/api/process-file', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -37,13 +33,15 @@ export default function Home() {
       const result = await response.json();
       
       if (!result.success) {
-        console.error('Error deleting file:', result.error);
-        // Continue even if file deletion fails, as the main processing was successful
+        console.error('Error processing file:', result.error);
+        return;
       }
       
-      // Show success modal
+      // Show success modal with download link
       setShowSuccessModal(true);
-      // Reset the uploaded file state but keep it for potential download
+      
+      // Keep the PDF path for download
+      setPdfPath(result.pdfPath);
       
     } catch (error) {
       console.error('Error processing file:', error);
@@ -52,8 +50,18 @@ export default function Home() {
     }
   };
 
-  const handleReset = () => {
-    setUploadedFile(null);
+  const handleReset = async () => {
+    try {
+      // Delete the generated PDF file
+      await fetch('/api/delete-generated-file', {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      console.error('Error cleaning up generated file:', error);
+    } finally {
+      setUploadedFile(null);
+      setPdfPath(null);
+    }
   };
 
   return (
@@ -65,7 +73,7 @@ export default function Home() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        backgroundImage: 'url(/background.jpg)',
+        backgroundImage: 'url(/media/background.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         zIndex: -10
@@ -197,45 +205,50 @@ export default function Home() {
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
-              aria-label="Close"
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
-            
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
                 <svg
-                  className="h-6 w-6 text-green-600"
+                  className="h-8 w-8 text-green-600"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  strokeWidth={1.5}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
                     d="M5 13l4 4L19 7"
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Processing Complete!</h3>
-              <p className="text-gray-500 mb-6">Your agenda has been successfully generated.</p>
-              <button
-                type="button"
-                onClick={() => {
-                  alert('The agendas would have downloaded');
-                  setShowSuccessModal(false);
-                  // Reset the uploaded file state to show the uploader again
-                  setUploadedFile(null);
-                }}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Download Agendas
-              </button>
+              <h3 className="text-lg font-semibold mb-2">Success!</h3>
+              <p className="text-gray-700 mb-6">Your agenda has been generated successfully!</p>
+              <div className="flex flex-col space-y-3">
+                <a
+                  href={pdfPath || '#'}
+                  download
+                  onClick={() => {
+                    // Reset the form and close the modal after a small delay
+                    setTimeout(() => {
+                      setShowSuccessModal(false);
+                      handleReset();
+                    }, 100);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Download Agenda
+                </a>
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    handleReset();
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Upload Another File
+                </button>
+              </div>
             </div>
           </div>
         </div>
